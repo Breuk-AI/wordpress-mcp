@@ -1,0 +1,31 @@
+# WordPress MCP Server Requirements
+# Python 3.8+ required
+
+# Core MCP packages
+mcp>=0.1.0
+mcp-server-stdio>=0.1.0
+
+# Async HTTP client
+aiohttp>=3.9.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# JSON schema validation
+jsonschema>=4.0.0
+
+# Logging enhancements
+colorlog>=6.7.0
+
+# Rate limiting
+aioredis>=2.0.0  # Optional: for distributed rate limiting
+aiolimiter>=1.1.0  # For local rate limiting
+
+# Testing (optional, for development)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# Type checking (optional, for development)
+mypy>=1.5.0
+types-aiofiles>=23.2.0
