@@ -1,0 +1,94 @@
+# WordPress MCP .gitignore
+
+# Environment and config files
+.env
+.env.local
+.env.*.local
+config.json
+*.config.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# WordPress Plugin
+wp-mcp-plugin/*.zip
+wp-mcp-plugin/vendor/
+wp-mcp-plugin/node_modules/
+
+# Backups
+*.backup
+*.bak
+*.old
+mcp-backups/
+
+# Logs
+*.log
+error_log
+debug.log
+
+# Testing
+tests/fixtures/config.json
+tests/fixtures/.env
+htmlcov/
+
+# Build artifacts
+*.tar.gz
+*.zip
+!.gitkeep
+
+# Documentation build
+docs/_build/
+docs/.doctrees/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
+
+# API Keys and Credentials
+# Never commit these!
+application-passwords.txt
+credentials.json
+secrets.json
