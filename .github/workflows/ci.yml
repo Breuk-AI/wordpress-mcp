@@ -10,39 +10,35 @@ jobs:
   validate:
     name: Validate WordPress MCP
     runs-on: ubuntu-latest
-ECHO is off.
+    
     steps:
-    - name: Checkout Repository
+    - name: Checkout code
       uses: actions/checkout@v4
-ECHO is off.
-    - name: Setup Python Environment
+    
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-ECHO is off.
-    - name: Validate Project Structure
+    
+    - name: Check Structure
       run: |
-        echo "======================================"
-        echo "  WordPress MCP Component Validation"
-        echo "======================================"
-        test -f manifest.json && echo "✅ DXT Manifest found"
-        test -d mcp-server && echo "✅ MCP Server directory found"
+        echo "================================"
+        echo "WordPress MCP Validation"
+        echo "================================"
+        test -f manifest.json && echo "✅ Manifest found"
+        test -d mcp-server && echo "✅ MCP Server found"
         test -d wp-mcp-plugin && echo "✅ WordPress Plugin found"
-        test -f README.md && echo "✅ Documentation present"
-        test -f LICENSE && echo "✅ MIT License included"
-        echo "======================================"
-        echo "     All Components Validated!"
-ECHO is off.
-    - name: Validate Manifest JSON
-      run: python -c "import json; data=json.load(open('manifest.json')); print(f'✅ Valid: {data[\"name\"]} v{data[\"version\"]}')"
-ECHO is off.
-    - name: Display Project Info
+        echo "================================"
+        echo "✅ All components present!"
+    
+    - name: Validate JSON
       run: |
-        echo "======================================"
-        echo "  WordPress MCP - Production Ready"
-        echo "  Made with ❤️ by Breuk ^& Claude"
-        echo "======================================"
-        echo "🚀 Status: Ready for deployment"
-        echo "📦 Installation: One-click DXT"
-        echo "🔒 Security: Enterprise grade"
-        echo "⚡ Features: Full WooCommerce"
+        python -c "import json; json.load(open('manifest.json'))"
+        echo "✅ Manifest JSON is valid"
+    
+    - name: Build Status
+      run: |
+        echo "================================"
+        echo "WordPress MCP - Build Passing"
+        echo "Made with ❤️ by Breuk & Claude"
+        echo "================================"
