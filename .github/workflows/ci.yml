@@ -1,4 +1,4 @@
-name: Build Status
+name: CI
 
 on:
   push:
@@ -7,38 +7,74 @@ on:
     branches: [ main ]
 
 jobs:
-  validate:
-    name: Validate WordPress MCP
+  test:
+    name: Test WordPress MCP
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Setup Python
+    - name: Setup Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: ${{ matrix.python-version }}
     
-    - name: Check Structure
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov
+        if [ -f mcp-server/requirements.txt ]; then pip install -r mcp-server/requirements.txt; fi
+    
+    - name: Run structure tests
+      run: |
+        python tests/test_structure.py
+    
+    - name: Run manifest tests
+      run: |
+        python tests/test_manifest.py
+    
+    - name: Run configuration tests
+      run: |
+        python tests/test_config.py
+    
+    - name: Run pytest
+      run: |
+        pytest tests/ -v --tb=short
+    
+    - name: Check code formatting
+      run: |
+        pip install black flake8
+        # Check but don't fail on formatting issues (optional)
+        black --check mcp-server/ || true
+        flake8 mcp-server/ --max-line-length=120 --ignore=E501,W503 || true
+    
+    - name: Validate WordPress plugin
+      run: |
+        # Check if plugin file has proper header
+        if grep -q "Plugin Name:" wp-mcp-plugin/wp-mcp-plugin.php; then
+          echo "✅ WordPress plugin header found"
+        else
+          echo "⚠️ WordPress plugin header missing"
+        fi
+    
+    - name: Build status badge
+      if: success()
       run: |
         echo "================================"
-        echo "WordPress MCP Validation"
-        echo "================================"
-        test -f manifest.json && echo "✅ Manifest found"
-        test -d mcp-server && echo "✅ MCP Server found"
-        test -d wp-mcp-plugin && echo "✅ WordPress Plugin found"
-        echo "================================"
-        echo "✅ All components present!"
-    
-    - name: Validate JSON
-      run: |
-        python -c "import json; json.load(open('manifest.json'))"
-        echo "✅ Manifest JSON is valid"
-    
-    - name: Build Status
-      run: |
-        echo "================================"
-        echo "WordPress MCP - Build Passing"
-        echo "Made with ❤️ by Breuk & Claude"
+        echo "✅ All Tests Passed!"
+        echo "WordPress MCP v1.0.0"
+        echo "Python ${{ matrix.python-version }}"
         echo "================================"

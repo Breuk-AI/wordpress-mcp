@@ -1,0 +1,1 @@
+"""WordPress MCP Test Suite."""

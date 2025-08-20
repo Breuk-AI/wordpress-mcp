@@ -1,0 +1,19 @@
+# Development dependencies for WordPress MCP
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.21.0
+
+# Code quality
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+
+# Documentation
+sphinx>=6.0.0
+sphinx-rtd-theme>=1.2.0
+
+# Development tools
+ipython>=8.0.0
+ipdb>=0.13.0
