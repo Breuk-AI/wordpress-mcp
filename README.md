@@ -61,7 +61,7 @@ A powerful MCP server that provides comprehensive control over WordPress sites t
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/wordpress-mcp.git
+git clone https://github.com/Breuk-AI/wordpress-mcp.git
 cd wordpress-mcp/mcp-server
 ```
 
@@ -243,8 +243,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- [Documentation](https://github.com/yourusername/wordpress-mcp/wiki)
-- [Issue Tracker](https://github.com/yourusername/wordpress-mcp/issues)
+- [Documentation](https://github.com/Breuk-AI/wordpress-mcp/wiki)
+- [Issue Tracker](https://github.com/Breuk-AI/wordpress-mcp/issues)
 - [MCP Protocol Spec](https://github.com/anthropics/mcp)
 - [WordPress REST API](https://developer.wordpress.org/rest-api/)
 
@@ -258,4 +258,4 @@ This tool provides powerful access to your WordPress site. Always:
 
 ---
 
-Made with ❤️ by the WordPress MCP Community
+Made with ❤️ by Breuk & Claude

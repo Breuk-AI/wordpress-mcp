@@ -20,8 +20,8 @@ fi
 echo ""
 echo "📝 Setting up git user..."
 echo "Please update these with your details if needed:"
-git config user.name "Your Name"
-git config user.email "your.email@example.com"
+git config user.name "Breuk-AI"
+git config user.email "breuk@breukandclaude.com"
 
 # Create initial branch
 git branch -M main
@@ -80,7 +80,7 @@ echo "6. Choose MIT license (or leave empty, we have LICENSE file)"
 echo ""
 echo "After creating the repository on GitHub, run these commands:"
 echo ""
-echo "git remote add origin https://github.com/YOUR_USERNAME/wordpress-mcp.git"
+echo "git remote add origin https://github.com/Breuk-AI/wordpress-mcp.git"
 echo "git push -u origin main"
 echo ""
 echo "================================================"

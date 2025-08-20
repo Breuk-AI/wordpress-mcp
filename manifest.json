@@ -1,0 +1,81 @@
+{
+  "name": "WordPress MCP",
+  "version": "1.0.0",
+  "description": "Comprehensive WordPress and WooCommerce control via MCP - manage posts, pages, media, templates, and products through natural language",
+  "author": "Breuk & Claude",
+  "homepage": "https://github.com/Breuk-AI/wordpress-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Breuk-AI/wordpress-mcp.git"
+  },
+  "license": "MIT",
+  "mcp": {
+    "type": "python",
+    "main": "mcp-server/server.py",
+    "requirements": "mcp-server/requirements.txt"
+  },
+  "configuration": {
+    "required": [
+      {
+        "key": "WP_SITE_URL",
+        "type": "string",
+        "description": "Your WordPress site URL (e.g., https://your-site.com)"
+      },
+      {
+        "key": "WP_USERNAME",
+        "type": "string",
+        "description": "WordPress username with admin privileges"
+      },
+      {
+        "key": "WP_APP_PASSWORD",
+        "type": "password",
+        "description": "WordPress Application Password (format: xxxx xxxx xxxx xxxx xxxx xxxx)"
+      }
+    ],
+    "optional": [
+      {
+        "key": "MCP_DEBUG",
+        "type": "boolean",
+        "default": false,
+        "description": "Enable debug logging"
+      },
+      {
+        "key": "RATE_LIMIT",
+        "type": "number",
+        "default": 60,
+        "description": "API requests per minute"
+      },
+      {
+        "key": "API_TIMEOUT",
+        "type": "number",
+        "default": 30,
+        "description": "API timeout in seconds"
+      }
+    ]
+  },
+  "features": [
+    "WordPress post/page management",
+    "Media library operations",
+    "Template editing with backups",
+    "WooCommerce product management",
+    "Order processing",
+    "Bulk operations",
+    "System monitoring",
+    "Custom post types",
+    "User management"
+  ],
+  "requirements": {
+    "wordpress": ">=5.6",
+    "php": ">=7.4",
+    "python": ">=3.8"
+  },
+  "tags": [
+    "wordpress",
+    "woocommerce",
+    "cms",
+    "content-management",
+    "mcp",
+    "automation",
+    "ai-integration"
+  ]
+}

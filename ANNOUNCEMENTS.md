@@ -35,8 +35,8 @@ I wanted to see how far I could push the integration between AI assistants and W
 
 This is my first public release, so I'd really appreciate any feedback, suggestions, or contributions!
 
-**GitHub**: [link]
-**Documentation**: [link]
+**GitHub**: https://github.com/Breuk-AI/wordpress-mcp
+**Documentation**: https://github.com/Breuk-AI/wordpress-mcp/wiki
 
 Feel free to ask me anything about the development process, working with Claude, or the MCP protocol!
 
@@ -53,7 +53,7 @@ WordPress MCP - Control your WordPress site with Claude and other AI assistants.
 
 After a month of building with Claude as my coding partner, it's finally ready!
 
-GitHub: [link]
+GitHub: https://github.com/Breuk-AI/wordpress-mcp
 
 #WordPress #OpenSource #MCP #FirstRelease
 
@@ -110,7 +110,7 @@ I'd love to connect with others interested in:
 - MCP protocol
 - Open source collaboration
 
-Check it out on GitHub: [link]
+Check it out on GitHub: https://github.com/Breuk-AI/wordpress-mcp
 
 #OpenSource #WordPress #AI #MCP #FirstRelease #Development
 
@@ -134,8 +134,8 @@ After about a month of working with Claude and learning the MCP protocol, I've b
 - Edit templates with automatic backups
 - Full admin UI in WordPress
 
-**Repo:** <GitHub link>
-**Docs:** <Wiki link>
+**Repo:** https://github.com/Breuk-AI/wordpress-mcp
+**Docs**: https://github.com/Breuk-AI/wordpress-mcp/wiki
 
 Would love any feedback, especially since this is my first public release! Happy to answer questions about the development process or how to get started.
 
@@ -170,7 +170,7 @@ I built this over the past month while learning to work with Claude as a program
 
 The architecture might be interesting to those working on AI-CMS integrations. Happy to discuss design decisions, security considerations, or the experience of AI-assisted development.
 
-**GitHub**: [link]
+**GitHub**: https://github.com/Breuk-AI/wordpress-mcp
 
 Looking forward to feedback from this community!
 
@@ -202,7 +202,7 @@ It's called WordPress MCP, and it lets you control WordPress sites through AI as
 
 What makes me really proud is that I built this in about a month while learning to collaborate with AI as a coding partner. It's been an incredible learning experience!
 
-If you work with WordPress or are interested in AI integrations, I'd love to get your thoughts: [GitHub link]
+If you work with WordPress or are interested in AI integrations, I'd love to get your thoughts: https://github.com/Breuk-AI/wordpress-mcp
 
 Even if it's not your area, I'd appreciate a star on GitHub if you think it's cool - it would mean a lot for my first release!
 
