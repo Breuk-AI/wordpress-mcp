@@ -1,6 +1,6 @@
 """
-WordPress API Client - SECURITY PATCHED VERSION
-Handles all communication with WordPress REST API and WooCommerce API
+Secure WordPress Client with all security fixes applied
+Production-ready implementation
 """
 
 import aiohttp
@@ -9,212 +9,209 @@ import json
 import logging
 import os
 import hashlib
-from typing import Dict, List, Optional, Any
-from urllib.parse import urljoin
+import time
 import asyncio
+from typing import Dict, List, Optional, Any, Tuple
+from urllib.parse import urljoin
 from contextlib import asynccontextmanager
+from cryptography.fernet import Fernet
 
+# Import our security modules
+from .secure_auth import SecureAuthManager
+from .session_manager import SecureSessionManager
+from .rate_limiter import RateLimiter
+from .validators import InputValidator, ValidationError
+
+# Configure secure logging
+class SecureLogger(logging.Logger):
+    """Logger that filters sensitive information"""
+    SENSITIVE_PATTERNS = [
+        'authorization', 'password', 'token', 'secret', 'api_key', 'app_password'
+    ]
+    
+    def _log(self, level, msg, args, **kwargs):
+        msg_lower = str(msg).lower()
+        for pattern in self.SENSITIVE_PATTERNS:
+            if pattern in msg_lower:
+                msg = "[REDACTED - Contains sensitive data]"
+                break
+        super()._log(level, msg, args, **kwargs)
+
+logging.setLoggerClass(SecureLogger)
 logger = logging.getLogger(__name__)
 
-# SECURITY: Configure logging to never log sensitive data
-class SanitizedFormatter(logging.Formatter):
-    """Custom formatter that removes sensitive data from logs"""
+class SecureWordPressClient:
+    """Secure WordPress REST API client with comprehensive protection"""
     
-    def format(self, record):
-        # Remove auth headers from log messages
-        if hasattr(record, 'msg'):
-            msg = str(record.msg)
-            # Remove base64 auth strings
-            import re
-            msg = re.sub(r'Basic [A-Za-z0-9+/=]+', 'Basic [REDACTED]', msg)
-            msg = re.sub(r'Authorization: [^\s]+', 'Authorization: [REDACTED]', msg)
-            record.msg = msg
-        return super().format(record)
-
-# Apply sanitized formatter to all handlers
-for handler in logger.handlers:
-    handler.setFormatter(SanitizedFormatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    ))
-
-class WordPressClient:
-    """Client for WordPress REST API communication with enhanced security"""
-    
-    def __init__(self, site_url: str, username: str, app_password: str, timeout: int = 30):
-        # SECURITY: Validate HTTPS usage
-        self.site_url = site_url.rstrip('/')
-        if not self.site_url.startswith('https://') and not os.getenv('WP_ALLOW_HTTP', '').lower() == 'true':
-            logger.warning("WARNING: Using HTTP instead of HTTPS. Set WP_ALLOW_HTTP=true to suppress this warning.")
+    def __init__(self, site_url: str, username: str, app_password: str, 
+                 timeout: int = 30, rate_limit: int = 60):
+        """
+        Initialize secure WordPress client
         
-        self.username = username
-        # SECURITY: Store password hash for verification, not the actual password
-        self._password_hash = hashlib.sha256(app_password.encode()).hexdigest()
-        self.timeout = aiohttp.ClientTimeout(total=timeout)
+        Args:
+            site_url: WordPress site URL
+            username: WordPress username
+            app_password: Application password
+            timeout: Request timeout in seconds
+            rate_limit: Requests per minute limit
+        """
+        # Validate inputs
+        self.site_url = InputValidator.validate('url', site_url.rstrip('/'))
+        self.username = InputValidator.validate('username', username)
         
-        # SECURITY: Create auth header without storing password
-        app_password_clean = app_password.replace(' ', '')
-        credentials = f"{username}:{app_password_clean}"
-        self._auth_header = f"Basic {base64.b64encode(credentials.encode()).decode()}"
+        # Secure auth management
+        self.auth_manager = SecureAuthManager()
+        self.auth_token = self.auth_manager.store_credentials(username, app_password)
         
-        # Clear the password from memory
-        del app_password
-        del app_password_clean
-        del credentials
+        # Session management
+        self.session_manager = SecureSessionManager(timeout=timeout)
+        
+        # Rate limiting
+        self.rate_limiter = RateLimiter(requests_per_minute=rate_limit)
         
         # API endpoints
         self.wp_api = f"{self.site_url}/wp-json/wp/v2"
         self.wc_api = f"{self.site_url}/wp-json/wc/v3"
         self.custom_api = f"{self.site_url}/wp-json/mcp/v1"
         
-        # Session for connection pooling
-        self.session: Optional[aiohttp.ClientSession] = None
-        
-        # Rate limiting
-        self.rate_limiter = RateLimiter(
-            max_requests=int(os.getenv('RATE_LIMIT', '60')),
-            time_window=60  # per minute
-        )
-    
-    @asynccontextmanager
-    async def get_session(self):
-        """Get or create an aiohttp session with proper cleanup"""
-        if self.session is None or self.session.closed:
-            # SECURITY: Never log the auth header
-            headers = {
-                "Authorization": self._auth_header,
-                "Content-Type": "application/json",
-                "User-Agent": "WordPress-MCP/1.0"
-            }
-            
-            self.session = aiohttp.ClientSession(
-                headers=headers,
-                timeout=self.timeout,
-                connector=aiohttp.TCPConnector(
-                    limit=30,
-                    limit_per_host=10,
-                    force_close=True,  # Security: Force connection close
-                    enable_cleanup_closed=True
-                )
-            )
-        try:
-            yield self.session
-        except Exception as e:
-            logger.error(f"Session error: {str(e)}")  # Don't log full exception which might contain auth
-            raise
-    
-    async def close(self):
-        """Close the session properly"""
-        if self.session and not self.session.closed:
-            await self.session.close()
-            # Small delay to ensure cleanup
-            await asyncio.sleep(0.25)
-    
-    async def __aenter__(self):
-        """Async context manager entry"""
-        return self
-    
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit"""
-        await self.close()
+        # Request tracking
+        self._request_id = 0
+        self._metrics = {
+            'total_requests': 0,
+            'failed_requests': 0,
+            'rate_limited': 0
+        }
     
     async def test_connection(self) -> bool:
-        """Test if we can connect to WordPress"""
+        """Test WordPress connection with secure auth"""
         try:
-            # Check rate limit
-            if not await self.rate_limiter.acquire():
-                logger.error("Rate limit exceeded during connection test")
-                return False
+            # Get auth header securely
+            auth_header = self.auth_manager.get_auth_header(self.auth_token)
             
-            async with aiohttp.ClientSession() as session:
-                headers = {"Authorization": self._auth_header}
-                
+            async with self.session_manager.get_session(
+                {"Authorization": auth_header}
+            ) as session:
                 async with session.get(
                     f"{self.wp_api}/users/me",
-                    headers=headers,
-                    timeout=self.timeout,
-                    ssl=True  # Force SSL verification
+                    ssl=True,  # Force SSL
+                    allow_redirects=False  # Prevent redirect attacks
                 ) as response:
                     if response.status == 200:
                         user = await response.json()
-                        logger.info(f"Connected as: {user.get('name', 'Unknown')}")
-                        # Don't log capabilities as they might reveal security info
+                        # Log without sensitive data
+                        logger.info(f"Connected as user ID: {user.get('id', 'Unknown')}")
                         return True
                     else:
                         logger.error(f"Connection failed with status: {response.status}")
                         return False
+                        
         except asyncio.TimeoutError:
             logger.error("Connection timed out")
             return False
         except Exception as e:
-            logger.error(f"Connection error: {type(e).__name__}")  # Don't log full error
+            logger.error(f"Connection error: {type(e).__name__}")
             return False
     
-    async def _request_with_retry(self, method: str, url: str, max_retries: int = 3, **kwargs):
-        """Make HTTP request with exponential backoff retry"""
-        for attempt in range(max_retries):
-            try:
-                # Check rate limit
-                if not await self.rate_limiter.acquire():
-                    raise Exception("Rate limit exceeded")
-                
-                async with self.get_session() as session:
-                    async with session.request(method, url, **kwargs) as response:
-                        return await self._handle_response(response)
+    async def _check_rate_limit(self) -> None:
+        """Check and enforce rate limiting"""
+        # Get identifier for rate limiting
+        identifier = hashlib.sha256(
+            f"{self.username}:{id(self)}".encode()
+        ).hexdigest()[:16]
+        
+        allowed, retry_after = await self.rate_limiter.check_rate_limit(identifier)
+        
+        if not allowed:
+            self._metrics['rate_limited'] += 1
+            raise Exception(f"Rate limit exceeded. Retry after {retry_after} seconds")
+    
+    async def _execute_request(self, method: str, url: str, 
+                              **kwargs) -> Any:
+        """Execute HTTP request with security measures"""
+        # Check rate limit
+        await self._check_rate_limit()
+        
+        # Generate request ID for tracing
+        self._request_id += 1
+        request_id = f"{self._request_id:06d}-{int(time.time())}"
+        
+        # Get auth header
+        auth_header = self.auth_manager.get_auth_header(self.auth_token)
+        
+        # Prepare headers
+        headers = {
+            "Authorization": auth_header,
+            "X-Request-ID": request_id,
+            "Content-Type": "application/json"
+        }
+        
+        # Add to kwargs
+        kwargs.setdefault('headers', {}).update(headers)
+        kwargs['ssl'] = True  # Force SSL
+        kwargs['allow_redirects'] = False  # Prevent redirect attacks
+        
+        # Track metrics
+        self._metrics['total_requests'] += 1
+        
+        try:
+            async with self.session_manager.get_session(headers) as session:
+                async with session.request(method, url, **kwargs) as response:
+                    return await self._handle_response(response)
+                    
+        except asyncio.TimeoutError:
+            self._metrics['failed_requests'] += 1
+            logger.error(f"Request {request_id} timed out")
+            raise Exception("Request timed out")
             
-            except asyncio.TimeoutError:
-                if attempt == max_retries - 1:
-                    raise
-                wait_time = (2 ** attempt) * 1  # Exponential backoff: 1, 2, 4 seconds
-                logger.warning(f"Request timeout, retrying in {wait_time} seconds...")
-                await asyncio.sleep(wait_time)
+        except Exception as e:
+            self._metrics['failed_requests'] += 1
+            logger.error(f"Request {request_id} failed: {type(e).__name__}")
+            raise
+    
+    async def _handle_response(self, response: aiohttp.ClientResponse) -> Any:
+        """Handle response with proper error handling"""
+        if response.status == 204:
+            return {"success": True}
+        
+        content_type = response.headers.get('Content-Type', '')
+        
+        try:
+            if 'application/json' in content_type:
+                data = await response.json()
+            else:
+                data = await response.text()
+        except Exception:
+            data = {"error": "Failed to parse response", "status": response.status}
+        
+        if response.status >= 400:
+            # Sanitize error message
+            error_message = self._sanitize_error(data)
             
-            except Exception as e:
-                if attempt == max_retries - 1:
-                    raise
-                if "rate limit" in str(e).lower():
-                    wait_time = 10  # Longer wait for rate limits
-                else:
-                    wait_time = (2 ** attempt) * 1
-                logger.warning(f"Request failed, retrying in {wait_time} seconds...")
-                await asyncio.sleep(wait_time)
+            if response.status == 401:
+                raise Exception("Authentication failed")
+            elif response.status == 403:
+                raise Exception("Permission denied")
+            elif response.status == 404:
+                raise Exception("Resource not found")
+            elif response.status == 429:
+                raise Exception("Rate limit exceeded")
+            else:
+                raise Exception(f"Request failed: {error_message}")
+        
+        return data
     
-    async def get(self, endpoint: str, params: Optional[Dict] = None) -> Any:
-        """GET request to API with retry logic"""
-        url = self._build_url(endpoint)
-        logger.debug(f"GET {url}")  # Don't log params which might contain sensitive data
-        
-        return await self._request_with_retry('GET', url, params=params)
-    
-    async def post(self, endpoint: str, data: Dict) -> Any:
-        """POST request to API with retry logic"""
-        url = self._build_url(endpoint)
-        logger.debug(f"POST {url}")
-        
-        # SECURITY: Sanitize data before sending
-        sanitized_data = self._sanitize_data(data)
-        
-        return await self._request_with_retry('POST', url, json=sanitized_data)
-    
-    async def put(self, endpoint: str, data: Dict) -> Any:
-        """PUT request to API with retry logic"""
-        url = self._build_url(endpoint)
-        logger.debug(f"PUT {url}")
-        
-        sanitized_data = self._sanitize_data(data)
-        
-        return await self._request_with_retry('PUT', url, json=sanitized_data)
-    
-    async def delete(self, endpoint: str) -> Any:
-        """DELETE request to API with retry logic"""
-        url = self._build_url(endpoint)
-        logger.debug(f"DELETE {url}")
-        
-        return await self._request_with_retry('DELETE', url)
+    def _sanitize_error(self, error_data: Any) -> str:
+        """Sanitize error message to prevent information disclosure"""
+        if isinstance(error_data, dict):
+            # Only return safe error messages
+            return error_data.get('code', 'unknown_error')
+        return "Request failed"
     
     def _build_url(self, endpoint: str) -> str:
-        """Build full URL from endpoint"""
+        """Build and validate URL"""
         if endpoint.startswith('http'):
-            return endpoint
+            # Validate full URL
+            return InputValidator.validate('url', endpoint)
         elif endpoint.startswith('/wp-json/'):
             return f"{self.site_url}{endpoint}"
         elif endpoint.startswith('wp/'):
@@ -226,111 +223,151 @@ class WordPressClient:
         else:
             return f"{self.wp_api}/{endpoint}"
     
-    def _sanitize_data(self, data: Dict) -> Dict:
-        """Sanitize data to prevent injection attacks"""
-        if not isinstance(data, dict):
-            return data
+    async def get(self, endpoint: str, params: Optional[Dict] = None) -> Any:
+        """Secure GET request"""
+        url = self._build_url(endpoint)
         
-        sanitized = {}
-        for key, value in data.items():
-            if isinstance(value, str):
-                # Basic sanitization - WordPress will do more on its end
-                value = value.replace('\x00', '')  # Remove null bytes
-                # Limit string length to prevent memory attacks
-                if len(value) > 100000:  # 100KB max per field
-                    value = value[:100000]
-            elif isinstance(value, dict):
-                value = self._sanitize_data(value)
-            elif isinstance(value, list):
-                value = [self._sanitize_data(item) if isinstance(item, dict) else item for item in value]
-            
-            sanitized[key] = value
+        # Validate params
+        if params:
+            validated_params = {}
+            for key, value in params.items():
+                # Basic validation - extend as needed
+                validated_params[key] = InputValidator.validate('param', value)
+            params = validated_params
         
-        return sanitized
+        logger.debug(f"GET {endpoint}")
+        return await self._execute_request('GET', url, params=params)
     
-    async def _handle_response(self, response: aiohttp.ClientResponse) -> Any:
-        """Handle API response"""
-        if response.status == 204:
-            return {"success": True}
+    async def post(self, endpoint: str, data: Dict) -> Any:
+        """Secure POST request"""
+        url = self._build_url(endpoint)
         
-        content_type = response.headers.get('Content-Type', '')
+        # Validate data based on endpoint
+        validated_data = self._validate_request_data(endpoint, data)
         
-        try:
-            if 'application/json' in content_type:
-                data = await response.json()
-            else:
-                data = await response.text()
-        except Exception as e:
-            logger.error(f"Failed to parse response")
-            data = {"error": "Failed to parse response", "status": response.status}
-        
-        if response.status >= 400:
-            # SECURITY: Don't log full error details that might expose system info
-            if response.status == 401:
-                raise Exception("Authentication failed. Please check your credentials.")
-            elif response.status == 403:
-                raise Exception("Permission denied. Insufficient privileges.")
-            elif response.status == 404:
-                raise Exception("Endpoint not found.")
-            elif response.status == 429:
-                raise Exception("Rate limit exceeded. Please try again later.")
-            else:
-                raise Exception(f"API Error {response.status}")
-        
-        return data
+        logger.debug(f"POST {endpoint}")
+        return await self._execute_request('POST', url, json=validated_data)
     
-    # Convenience methods remain the same but inherit security improvements
+    async def put(self, endpoint: str, data: Dict) -> Any:
+        """Secure PUT request"""
+        url = self._build_url(endpoint)
+        
+        # Validate data
+        validated_data = self._validate_request_data(endpoint, data)
+        
+        logger.debug(f"PUT {endpoint}")
+        return await self._execute_request('PUT', url, json=validated_data)
+    
+    async def delete(self, endpoint: str) -> Any:
+        """Secure DELETE request"""
+        url = self._build_url(endpoint)
+        
+        logger.debug(f"DELETE {endpoint}")
+        return await self._execute_request('DELETE', url)
+    
+    def _validate_request_data(self, endpoint: str, data: Dict) -> Dict:
+        """Validate request data based on endpoint"""
+        validated = {}
+        
+        # Endpoint-specific validation
+        if 'posts' in endpoint:
+            if 'title' in data:
+                validated['title'] = InputValidator.validate('post_title', data['title'])
+            if 'content' in data:
+                validated['content'] = InputValidator.validate('post_content', data['content'])
+            if 'status' in data:
+                validated['status'] = InputValidator.validate('post_status', data['status'])
+            # Add other fields as needed
+            for key, value in data.items():
+                if key not in validated:
+                    validated[key] = value  # Pass through other fields
+                    
+        elif 'templates' in endpoint:
+            if 'path' in data:
+                validated['path'] = InputValidator.validate('template_path', data['path'])
+            if 'content' in data:
+                # Special validation for template content
+                validated['content'] = self._validate_template_content(data['content'])
+            for key, value in data.items():
+                if key not in validated:
+                    validated[key] = value
+                    
+        else:
+            # Default validation for other endpoints
+            validated = data
+        
+        return validated
+    
+    def _validate_template_content(self, content: str) -> str:
+        """Validate template content for security"""
+        # Check for dangerous PHP functions
+        dangerous_functions = [
+            'eval', 'exec', 'system', 'shell_exec', 'passthru',
+            'proc_open', 'popen', 'curl_exec', 'file_get_contents',
+            'file_put_contents', 'fopen', 'fwrite'
+        ]
+        
+        for func in dangerous_functions:
+            if f'{func}(' in content:
+                raise ValidationError(f"Dangerous function '{func}' not allowed in templates")
+        
+        # Check for base64 encoded content
+        if 'base64_decode' in content:
+            raise ValidationError("Base64 decode not allowed in templates")
+        
+        return content
+    
+    # Convenience methods with validation
     
     async def get_posts(self, **params) -> List[Dict]:
-        """Get posts with optional filters"""
+        """Get posts with validation"""
         return await self.get("posts", params)
     
-    async def get_post(self, post_id: int) -> Dict:
-        """Get single post"""
-        return await self.get(f"posts/{post_id}")
-    
     async def create_post(self, data: Dict) -> Dict:
-        """Create new post"""
+        """Create post with validation"""
         return await self.post("posts", data)
     
     async def update_post(self, post_id: int, data: Dict) -> Dict:
-        """Update existing post"""
+        """Update post with validation"""
+        post_id = InputValidator.validate('id', post_id)
         return await self.put(f"posts/{post_id}", data)
     
     async def delete_post(self, post_id: int, force: bool = False) -> Dict:
-        """Delete post"""
+        """Delete post with validation"""
+        post_id = InputValidator.validate('id', post_id)
         endpoint = f"posts/{post_id}"
         if force:
             endpoint += "?force=true"
         return await self.delete(endpoint)
     
-    # Additional methods remain the same...
-
-
-class RateLimiter:
-    """Simple rate limiter using sliding window"""
+    async def read_template(self, template_path: str) -> Dict:
+        """Read template with path validation"""
+        validated_path = InputValidator.validate('template_path', template_path)
+        return await self.post("mcp/templates/read", {"path": validated_path})
     
-    def __init__(self, max_requests: int, time_window: int):
-        self.max_requests = max_requests
-        self.time_window = time_window  # in seconds
-        self.requests = []
-        self.lock = asyncio.Lock()
+    async def update_template(self, template_path: str, content: str) -> Dict:
+        """Update template with full validation"""
+        validated_path = InputValidator.validate('template_path', template_path)
+        validated_content = self._validate_template_content(content)
+        
+        return await self.post("mcp/templates/update", {
+            "path": validated_path,
+            "content": validated_content
+        })
     
-    async def acquire(self) -> bool:
-        """Check if request can proceed"""
-        async with self.lock:
-            now = asyncio.get_event_loop().time()
-            
-            # Remove old requests outside the window
-            self.requests = [req_time for req_time in self.requests 
-                           if now - req_time < self.time_window]
-            
-            if len(self.requests) < self.max_requests:
-                self.requests.append(now)
-                return True
-            
-            return False
+    def get_metrics(self) -> Dict[str, int]:
+        """Get client metrics for monitoring"""
+        return self._metrics.copy()
     
-    def reset(self):
-        """Reset the rate limiter"""
-        self.requests = []
+    async def close(self):
+        """Clean shutdown"""
+        await self.session_manager.close()
+        self.auth_manager.clear_all()
+    
+    async def __aenter__(self):
+        """Async context manager entry"""
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit"""
+        await self.close()
