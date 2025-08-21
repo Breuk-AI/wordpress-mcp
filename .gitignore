@@ -92,3 +92,7 @@ Desktop.ini
 application-passwords.txt
 credentials.json
 secrets.json
+
+# Archived directories
+.archive/
+

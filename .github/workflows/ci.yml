@@ -6,104 +6,209 @@ on:
   pull_request:
     branches: [ main ]
 
+# This CI workflow tests the WordPress MCP (Model Context Protocol) server
+# It's a Python application that controls WordPress via REST API, not a PHP plugin
+
 jobs:
-  validate:
-    name: Validate WordPress MCP
+  test:
+    name: Test WordPress MCP Server
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        
+        # Install MCP server dependencies
+        if [ -f mcp-server/requirements.txt ]; then
+          pip install -r mcp-server/requirements.txt
+        fi
+        
+        # Install development dependencies (includes pytest)
+        if [ -f requirements-dev.txt ]; then
+          pip install -r requirements-dev.txt
+        fi
+    
+    - name: Run pytest with coverage
+      run: |
+        echo "================================"
+        echo "Running WordPress MCP Test Suite"
+        echo "================================"
+        echo
+        
+        # Run pytest with coverage and verbose output
+        python -m pytest tests/ \
+          --verbose \
+          --cov=mcp-server \
+          --cov-report=term-missing \
+          --cov-report=xml \
+          --cov-report=html \
+          --junitxml=test-results.xml \
+          --cov-fail-under=60  # Fail if coverage drops below 60%
+    
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.10'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: wordpress-mcp
+        fail_ci_if_error: true  # Fail if can't upload coverage
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          test-results.xml
+          htmlcov/
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     
-    - name: Validate Project Structure
+    - name: Install security tools
       run: |
-        #!/bin/bash
-        set -e
+        python -m pip install --upgrade pip
+        pip install bandit[toml] safety
         
-        echo "================================"
-        echo "WordPress MCP Validation v1.0.1"
-        echo "================================"
-        echo
+        # Install project dependencies to check them
+        if [ -f mcp-server/requirements.txt ]; then
+          pip install -r mcp-server/requirements.txt
+        fi
+    
+    - name: Run Bandit security scan
+      run: |
+        echo "Running Bandit security scan..."
+        # Fail on medium severity and above
+        bandit -r mcp-server/ -ll -f json -o bandit-report.json
         
-        # Function to check file exists
-        check_file() {
-            if [ -f "$1" ]; then
-                echo "✅ Found: $1"
-                return 0
-            else
-                echo "❌ Missing: $1"
-                return 1
-            fi
-        }
-        
-        # Function to check directory exists
-        check_dir() {
-            if [ -d "$1" ]; then
-                echo "✅ Found: $1"
-                return 0
-            else
-                echo "❌ Missing: $1"
-                return 1
-            fi
-        }
-        
-        echo "1. Checking Core Structure..."
-        echo "------------------------------"
-        check_file "manifest.json"
-        check_file "README.md"
-        check_file "LICENSE"
-        check_dir "mcp-server"
-        check_dir "wp-mcp-plugin"
-        check_dir "tests"
-        echo
-        
-        echo "2. Checking MCP Server Files..."
-        echo "--------------------------------"
-        check_file "mcp-server/server.py"
-        check_file "mcp-server/wp_client.py"
-        check_file "mcp-server/requirements.txt"
-        check_dir "mcp-server/tools"
-        echo
-        
-        echo "3. Checking Tool Modules..."
-        echo "----------------------------"
-        check_file "mcp-server/tools/posts.py"
-        check_file "mcp-server/tools/pages.py"
-        check_file "mcp-server/tools/media.py"
-        check_file "mcp-server/tools/woocommerce.py"
-        check_file "mcp-server/tools/templates.py"
-        check_file "mcp-server/tools/system.py"
-        echo
-        
-        echo "4. Checking WordPress Plugin..."
-        echo "--------------------------------"
-        check_file "wp-mcp-plugin/wp-mcp-plugin.php"
-        check_dir "wp-mcp-plugin/includes"
-        check_file "wp-mcp-plugin/includes/api-endpoints.php"
-        check_file "wp-mcp-plugin/includes/auth.php"
-        echo
-        
-        echo "================================"
-        echo "✅ Structure validation complete"
-        echo "================================"
+        # Also output human-readable format
+        bandit -r mcp-server/ -ll
+    
+    - name: Check for known vulnerabilities
+      run: |
+        echo "Checking dependencies for known vulnerabilities..."
+        # This will fail if vulnerabilities are found
+        safety check --json
+    
+    - name: Check for secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: ${{ github.event.repository.default_branch }}
+        head: HEAD
+    
+    - name: Upload security reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+    
+    - name: Check import sorting with isort
+      run: |
+        echo "Checking import sorting..."
+        isort --check-only --diff mcp-server/ tests/
+    
+    - name: Check code formatting with black
+      run: |
+        echo "Checking code formatting..."
+        black --check --diff mcp-server/ tests/
+    
+    - name: Run flake8 linting
+      run: |
+        echo "Running flake8 linting..."
+        # E9,F63,F7,F82 are Python syntax errors or undefined names
+        # E203,W503 are incompatible with black
+        flake8 mcp-server/ tests/ \
+          --count \
+          --select=E9,F63,F7,F82 \
+          --extend-ignore=E203,W503 \
+          --max-line-length=88 \
+          --show-source \
+          --statistics
+    
+    - name: Type checking with mypy
+      run: |
+        echo "Running type checking..."
+        mypy mcp-server/ --ignore-missing-imports --warn-unused-ignores
+
+  validate:
+    name: Validate Configuration
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
     
     - name: Validate manifest.json
       run: |
-        echo "Validating manifest.json..."
+        echo "================================"
+        echo "Validating MCP manifest.json"
+        echo "================================"
         python3 -c "
         import json
         import sys
+        
+        print('This is a Python MCP server that controls WordPress via REST API')
+        print('Not a WordPress PHP plugin, but a Python application\\n')
         
         try:
             with open('manifest.json', 'r') as f:
                 data = json.load(f)
             
-            # Check required fields
+            # Check required fields for MCP protocol
             required = ['name', 'version', 'description', 'mcp']
             missing = [field for field in required if field not in data]
             
@@ -116,9 +221,14 @@ jobs:
                 print('❌ Invalid MCP configuration')
                 sys.exit(1)
             
+            # Check that main points to Python server
+            if not data['mcp']['main'].endswith('.py'):
+                print('⚠️  Warning: MCP main should point to Python server file')
+            
             print('✅ manifest.json is valid')
             print(f'   Name: {data[\"name\"]}')
             print(f'   Version: {data[\"version\"]}')
+            print(f'   MCP Main: {data[\"mcp\"][\"main\"]}')
             
         except json.JSONDecodeError as e:
             print(f'❌ Invalid JSON: {e}')
@@ -128,81 +238,101 @@ jobs:
             sys.exit(1)
         "
     
-    - name: Verify Security Patches
+    - name: Check WordPress Plugin Companion
       run: |
+        echo
         echo "================================"
-        echo "Security Patch Verification"
+        echo "Checking WordPress Plugin Companion"
         echo "================================"
+        echo "Note: This is the PHP plugin that enables MCP server communication"
         echo
         
-        # Check Python security patches
-        echo "Checking Python security features..."
-        
-        if grep -q "class RateLimiter" mcp-server/wp_client.py; then
-            echo "✅ Rate limiting implemented"
+        # Check plugin header
+        if [ -f "wp-mcp-plugin/wp-mcp-plugin.php" ]; then
+            if grep -q "Plugin Name:" wp-mcp-plugin/wp-mcp-plugin.php; then
+                echo "✅ Valid WordPress plugin header found"
+                grep "Plugin Name:" wp-mcp-plugin/wp-mcp-plugin.php
+                grep "Version:" wp-mcp-plugin/wp-mcp-plugin.php
+            else
+                echo "❌ WordPress plugin header not found"
+                exit 1
+            fi
         else
-            echo "⚠️  Rate limiting not found (non-critical)"
+            echo "⚠️  No WordPress companion plugin found (optional)"
         fi
         
-        if grep -q "hashlib" mcp-server/wp_client.py; then
-            echo "✅ Password hashing implemented"
-        else
-            echo "⚠️  Password hashing not found (non-critical)"
-        fi
-        
-        if grep -q "_sanitize_data" mcp-server/wp_client.py; then
-            echo "✅ Input sanitization implemented"
-        else
-            echo "⚠️  Input sanitization not found (non-critical)"
-        fi
-        
+        # Check MCP server structure
         echo
-        echo "Checking PHP security features..."
+        echo "Checking MCP Server Structure..."
+        required_files=(
+            "mcp-server/server.py"
+            "mcp-server/wp_client.py"
+            "mcp-server/requirements.txt"
+        )
         
-        if grep -q "mcp_validate_template_path" wp-mcp-plugin/includes/api-endpoints.php; then
-            echo "✅ Path traversal protection implemented"
-        else
-            echo "⚠️  Path validation not found (non-critical)"
-        fi
-        
-        if grep -q "realpath" wp-mcp-plugin/includes/api-endpoints.php; then
-            echo "✅ Realpath validation implemented"
-        else
-            echo "⚠️  Realpath check not found (non-critical)"
-        fi
-        
-        if grep -q "\.php" wp-mcp-plugin/includes/api-endpoints.php; then
-            echo "✅ File extension validation implemented"
-        else
-            echo "⚠️  Extension validation not found (non-critical)"
-        fi
-        
-        echo
-        echo "✅ Security verification complete"
+        for file in "${required_files[@]}"; do
+            if [ -f "$file" ]; then
+                echo "✅ Found: $file"
+            else
+                echo "❌ Missing: $file"
+                exit 1
+            fi
+        done
     
-    - name: Check WordPress Plugin Header
-      run: |
-        echo "Checking WordPress plugin header..."
-        
-        if grep -q "Plugin Name:" wp-mcp-plugin/wp-mcp-plugin.php; then
-            echo "✅ Valid WordPress plugin header found"
-            
-            # Extract plugin info
-            grep "Plugin Name:" wp-mcp-plugin/wp-mcp-plugin.php
-            grep "Version:" wp-mcp-plugin/wp-mcp-plugin.php
-            grep "Description:" wp-mcp-plugin/wp-mcp-plugin.php
-        else
-            echo "❌ WordPress plugin header not found"
-            exit 1
-        fi
-    
-    - name: Final Status
+    - name: Check Python package structure
       run: |
         echo
-        echo "================================================"
-        echo "  ✅ ALL VALIDATIONS PASSED!"
-        echo "================================================"
-        echo "  WordPress MCP v1.0.1 (Security Update)"
-        echo "  Status: Production Ready"
-        echo "  Security: Patches Applied"
-        echo "================================================"
+        echo "================================"
+        echo "Checking Python Package Structure"
+        echo "================================"
+        
+        # Check for proper Python package structure
+        if [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
+            echo "✅ Python package configuration found"
+        else
+            echo "⚠️  No setup.py or pyproject.toml found"
+        fi
+        
+        # Check for requirements files
+        if [ -f "mcp-server/requirements.txt" ]; then
+            echo "✅ Runtime requirements found"
+            echo "   Dependencies:"
+            head -5 mcp-server/requirements.txt | sed 's/^/     /'
+        fi
+        
+        if [ -f "requirements-dev.txt" ]; then
+            echo "✅ Development requirements found"
+        fi
+
+  # All jobs must pass for the workflow to succeed
+  status:
+    name: CI Status
+    runs-on: ubuntu-latest
+    needs: [test, security, lint, validate]
+    if: always()
+    
+    steps:
+    - name: Check status
+      run: |
+        if [[ "${{ needs.test.result }}" == "success" && 
+              "${{ needs.security.result }}" == "success" && 
+              "${{ needs.lint.result }}" == "success" && 
+              "${{ needs.validate.result }}" == "success" ]]; then
+          echo "================================================"
+          echo "  ✅ ALL CHECKS PASSED!"
+          echo "================================================"
+          echo "  WordPress MCP Server - Production Ready"
+          echo "  All tests, security, and quality checks passed"
+          echo "================================================"
+          exit 0
+        else
+          echo "================================================"
+          echo "  ❌ CI FAILED"
+          echo "================================================"
+          echo "  Test: ${{ needs.test.result }}"
+          echo "  Security: ${{ needs.security.result }}"
+          echo "  Lint: ${{ needs.lint.result }}"
+          echo "  Validate: ${{ needs.validate.result }}"
+          echo "================================================"
+          exit 1
+        fi
