@@ -62,3 +62,53 @@ jobs:
             print(f'❌ Invalid manifest.json: {e}')
             exit(1)
         "
+
+  syntax-check:
+    name: Python Syntax Validation
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    
+    - name: Check Python Syntax
+      run: |
+        echo "================================"
+        echo "Python Syntax Validation"
+        echo "================================"
+        echo
+        
+        # Find and compile all Python files, excluding virtual environments
+        # Using the approach recommended by Gemini for robustness
+        echo "Checking Python files in mcp-server/..."
+        
+        # Count files for summary
+        file_count=$(find mcp-server/ -path '*/venv/*' -prune -o -path '*/.venv/*' -prune -o -path '*/__pycache__/*' -prune -o -name "*.py" -type f -print | wc -l)
+        echo "Found $file_count Python files to check"
+        echo
+        
+        # List files being checked for transparency
+        find mcp-server/ -path '*/venv/*' -prune -o -path '*/.venv/*' -prune -o -path '*/__pycache__/*' -prune -o -name "*.py" -type f -print | while read file; do
+          echo "  Checking: $file"
+        done
+        echo
+        
+        # Perform actual syntax validation
+        find mcp-server/ -path '*/venv/*' -prune -o -path '*/.venv/*' -prune -o -path '*/__pycache__/*' -prune -o -name "*.py" -type f -exec python -m py_compile {} +
+        
+        if [ $? -eq 0 ]; then
+          echo "================================"
+          echo "✅ All Python files have valid syntax!"
+          echo "================================"
+        else
+          echo "================================"
+          echo "❌ Syntax errors found!"
+          echo "================================"
+          exit 1
+        fi
