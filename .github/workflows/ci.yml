@@ -113,6 +113,58 @@ jobs:
           exit 1
         fi
 
+  unit-tests:
+    name: Unit Tests (Pure Functions)
+    runs-on: ubuntu-latest
+    needs: syntax-check
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        echo "Installing test dependencies..."
+        pip install --upgrade pip
+        
+        # Install main dependencies
+        if [ -f "mcp-server/requirements.txt" ]; then
+          pip install -r mcp-server/requirements.txt
+        fi
+        
+        # Install test dependencies
+        pip install pytest pytest-cov pytest-mock
+        echo "✅ Test dependencies installed"
+    
+    - name: Run Unit Tests
+      run: |
+        echo "================================"
+        echo "🧪 Running Unit Tests"
+        echo "================================"
+        echo
+        echo "Testing pure functions only (no external dependencies)..."
+        echo
+        
+        # Run pytest with coverage
+        pytest tests/unit/ -v --tb=short --cov=mcp-server --cov-report=term-missing --cov-report=html
+        
+        echo
+        echo "================================"
+        echo "✅ Unit tests completed!"
+        echo "================================"
+    
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-report
+        path: htmlcov/
+
   quality-checks:
     name: Code Quality Analysis (Non-Blocking)
     runs-on: ubuntu-latest
