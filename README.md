@@ -38,8 +38,9 @@ cd wordpress-mcp
 
 3. **Configure the MCP server:**
 
-Use dxt install https://github.com/Breuk-AI/wordpress-mcp for easy 1-click installation and configuration
-or
+   Use for easy 1-click installation and configuration
+```dxt install https://github.com/Breuk-AI/wordpress-mcp``` 
+   or
 ```bash
 cd mcp-server
 cp .env.example .env
