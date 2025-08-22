@@ -37,6 +37,8 @@ cd wordpress-mcp
    - Activate "WordPress MCP Integration" in WordPress admin
 
 3. **Configure the MCP server:**
+Use dxt install https://github.com/Breuk-AI/wordpress-mcp for easy 1-click installation and configuration
+or
 ```bash
 cd mcp-server
 cp .env.example .env
@@ -126,7 +128,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🚦 Status
 
-- ✅ **Production Ready** (v1.0.1)
+- ✅ **Production Ready** (v1.1.1)
 - ✅ **Security Audited**
 - ✅ **CI/CD Pipeline Active**
 - ✅ **Documentation Complete**
