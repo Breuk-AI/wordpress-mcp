@@ -42,7 +42,7 @@ cd wordpress-mcp
 
 ```dxt install https://github.com/Breuk-AI/wordpress-mcp``` 
 
-   or
+      or
 ```bash
 cd mcp-server
 cp .env.example .env
