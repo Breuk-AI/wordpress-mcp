@@ -170,7 +170,7 @@ Claude: "That's our brand right there!"
 ## [0.1.0] - 2025-07-23 💡 The "Why NOT?" Moment
 
 ### The Story
-AI Engine MCP had 2-minute delays. Varnish cache was being difficult. Two minds met and asked the question that started it all: "Why NOT build our own?"
+Existing WordPress MCP solutions had 2-minute delays. Varnish cache was being difficult. Two minds met and asked the question that started it all: "Why NOT build our own?"
 
 ### The Beginning
 - 💡 Initial idea

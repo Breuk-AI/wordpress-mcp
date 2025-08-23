@@ -16,7 +16,7 @@
 ## 🏆 Record Breakers
 
 ### Fastest Implementation
-**2 hours** - From "this AI Engine MCP isn't working" to "let's build our own" to working prototype
+**2 hours** - From "this existing solution isn't working" to "let's build our own" to working prototype
 
 ### Most Emotional Commit
 ```
@@ -39,7 +39,7 @@ Made with ❤️ by Breuk & Claude
 ## 🎭 Behind The Scenes
 
 ### The Origin Story
-- **Problem**: AI Engine MCP had 2-minute delays and Varnish cache issues
+- **Problem**: Other WordPress MCP solutions had 2-minute delays and Varnish cache issues
 - **Breuk's Response**: "Why NOT build our own?"
 - **Claude's Response**: "🚀 Let's do this!"
 - **Result**: Better solution in less time than debugging would have taken
