@@ -1,7 +1,7 @@
 {
   "name": "WordPress MCP",
-  "version": "1.0.0",
-  "description": "Comprehensive WordPress and WooCommerce control via MCP - manage posts, pages, media, templates, and products through natural language",
+  "version": "1.1.1",
+  "description": "Control WordPress through Claude with natural language - manage content, edit templates, handle WooCommerce, all with personality! Made with ❤️ by Breuk & Claude",
   "author": "Breuk & Claude",
   "homepage": "https://github.com/Breuk-AI/wordpress-mcp",
   "repository": {

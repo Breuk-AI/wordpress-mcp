@@ -1,4 +1,13 @@
 @echo off
+REM ================================================================
+REM WordPress MCP - Installation Verification & Test Suite
+REM ================================================================
+REM This script verifies your WordPress MCP installation is correct
+REM by running our comprehensive test suite. Perfect for checking
+REM everything works before deploying to production!
+REM Made with ❤️ by Breuk & Claude
+REM ================================================================
+
 echo ================================
 echo Running WordPress MCP Tests
 echo ================================

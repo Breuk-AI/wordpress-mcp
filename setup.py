@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """
-WordPress MCP Server - Quick Setup Script
-For public users to easily configure their MCP server
+WordPress MCP - Interactive Setup Assistant 🚀
+
+This friendly setup script guides you through configuring WordPress MCP.
+It creates your .env file, checks dependencies, and gets you ready to
+connect Claude to your WordPress site in minutes!
+
+Run: python setup.py
+
+Made with ❤️ by Breuk & Claude
+Intelligence Combined 🧠
 """
 
 import os

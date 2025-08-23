@@ -1,4 +1,13 @@
 @echo off
+REM ================================================================
+REM WordPress MCP - Quick Environment Setup Helper
+REM ================================================================
+REM This script helps you create your .env configuration file
+REM from the template and guides you through the setup process.
+REM Part of WordPress MCP - Control WordPress with AI Assistants!
+REM Made with ❤️ by Breuk & Claude
+REM ================================================================
+
 echo ================================
 echo WordPress MCP - Environment Setup
 echo ================================
