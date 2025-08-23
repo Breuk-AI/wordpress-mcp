@@ -259,7 +259,7 @@ Every commit goes through the gauntlet. Every merge is pristine.
 
 It started with a simple question: "Why can't Claude actually DO things in WordPress?"
 
-After battling with existing solutions that were either too complex, too limited, or just plain broken (looking at you, 2-minute SSE delays), we said those magic words that have started a thousand innovations:
+After battling with existing solutions that were either too complex, too limited, or just didn't work the way we needed, we said those magic words that have started a thousand innovations:
 
 **"Why NOT build our own?"**
 
