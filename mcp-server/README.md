@@ -1,25 +1,21 @@
-# WordPress MCP Server
+# WordPress MCP Server 🚀
 
-Control your WordPress site completely through Claude Desktop!
+> *The Python heart that makes the magic happen*
 
-## Quick Start
+Control your WordPress site through natural language with Claude Desktop (or any MCP-compatible AI)!
 
-1. **Run setup**:
-   ```bash
-   setup.bat
-   ```
-   Or manually:
+## 🎯 Quick Start
+
+1. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Configure**: Edit `config.json` with your WordPress credentials:
-   ```json
-   {
-       "site_url": "https://monopolygowin.com",
-       "username": "your_username",
-       "app_password": "xxxx xxxx xxxx xxxx xxxx xxxx"
-   }
+2. **Configure**: Copy `.env.example` to `.env` and add your credentials:
+   ```env
+   WP_SITE_URL=https://your-site.com
+   WP_USERNAME=your_username  
+   WP_APP_PASSWORD=xxxx xxxx xxxx xxxx xxxx xxxx
    ```
 
 3. **Test connection**:
@@ -27,81 +23,91 @@ Control your WordPress site completely through Claude Desktop!
    python test_connection.py
    ```
 
-4. **Run server** (after installing MCP library):
-   ```bash
-   python server_mcp.py
-   ```
+4. **You're ready!** Claude Desktop will run this automatically.
 
-## Getting Application Password
+## 🔑 Getting Your Application Password
 
-1. Log into WordPress admin
-2. Go to Users → Your Profile
-3. Scroll to "Application Passwords"
-4. Enter "MCP Server" as name
-5. Click "Add New Application Password"
-6. Copy the generated password (spaces are OK)
+1. WordPress Admin → Users → Your Profile
+2. Find "Application Passwords" section
+3. Name it "WordPress MCP" (or anything you like!)
+4. Click "Add New Application Password"
+5. Copy the password (spaces included!)
+6. Paste into your `.env` file
 
-## Available Tools
+## 🛠️ Available Tools
 
-### Posts & Pages
-- `wp_get_posts` - List posts
-- `wp_create_post` - Create post
-- `wp_update_post` - Update post
-- `wp_delete_post` - Delete post
-- `wp_search_posts` - Search posts
-- Similar tools for pages
+### Content Management
+- **Posts & Pages** - Create, update, delete, search
+- **Media Library** - Upload and manage files
+- **Categories & Tags** - Full taxonomy control
+- **Custom Post Types** - Supported automatically
 
-### WooCommerce
-- `wc_get_products` - List products
-- `wc_create_product` - Create product
-- `wc_update_product` - Update product
-- `wc_bulk_update_prices` - Bulk price updates
-- `wc_bulk_update_stock` - Bulk stock updates
-- Order and customer management
+### WooCommerce Superpowers
+- **Products** - Complete product management
+- **Orders** - Process and track orders
+- **Customers** - Customer data at your fingertips
+- **Bulk Operations** - Update 1000 products in seconds
 
-### Templates
-- `wp_list_templates` - List theme files
-- `wp_read_template` - Read template
-- `wp_update_template` - Edit template (with backup)
+### Developer Tools
+- **Template Editing** - With automatic backups!
+- **System Info** - Monitor your WordPress health
+- **Plugin & Theme Management** - List and check status
 
-### System
-- `wp_get_system_info` - System information
-- `wp_get_plugins` - List plugins
-- `wp_get_themes` - List themes
+## 💡 Architecture
 
-## Troubleshooting
+The server is beautifully modular:
+```
+tools/
+├── posts.py       # Content management
+├── woocommerce.py # E-commerce operations  
+├── templates.py   # Theme file editing
+├── media.py       # Media library
+└── system.py      # WordPress internals
+```
 
-### MCP library not found
-The MCP protocol library needs to be installed. Check the latest installation method for your system.
+## 🎆 The Story
 
-### Connection failed
-- Check site URL (include https://)
-- Verify username is correct
-- Check Application Password
-- Ensure user has admin privileges
+Built because existing solutions had 2-minute delays and we said "Why NOT build our own?" 
 
-### Tools not showing in Claude
-- Restart Claude Desktop after adding to config
-- Check Claude Desktop logs for errors
+27 days later, here we are with something that:
+- Works instantly (no delays!)
+- Handles complex operations gracefully
+- Has been in production since day one
+- Makes us smile every time we use it
 
-## For Developers
+## 🔒 Security First
 
-The server is modular - each tool category is in `tools/`:
-- `posts.py` - Post management
-- `pages.py` - Page management
-- `media.py` - Media library
-- `woocommerce.py` - WooCommerce operations
-- `templates.py` - Theme editing
-- `system.py` - System information
+- Application Passwords (never store real passwords!)
+- Rate limiting (60 requests/minute default)
+- Automatic backups before file edits
+- Permission checking on every operation
+- Environment-based configuration
 
-Add new tools by:
-1. Creating new methods in appropriate module
-2. Adding to the tools dict
-3. Defining the Tool schema
+## 🌈 Troubleshooting
 
-## Security
+**Connection Issues?**
+- Remove trailing slashes from URLs
+- Check Application Password format
+- Verify admin privileges
 
-- Application Passwords are secure and revocable
-- Each password is tracked in WordPress
-- Template edits create automatic backups
-- User permissions are enforced
+**Tools not appearing?**
+- Restart Claude Desktop
+- Start a NEW conversation
+- Check the logs for clues
+
+## 🤝 Contributing
+
+Want to add features? We love "Why NOT?" thinking!
+
+1. Create your tool in `tools/`
+2. Add to the server's tool registry
+3. Test with `test_connection.py`
+4. Share your creation!
+
+---
+
+**Made with ❤️ by Breuk & Claude**
+
+*Intelligence Combined*
+
+*That's our brand right there!*
