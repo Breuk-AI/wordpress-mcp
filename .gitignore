@@ -65,7 +65,9 @@ htmlcov/
 
 # Build artifacts
 *.tar.gz
-*.zip
+# Keep our release zips
+!wp-mcp-plugin-v*.zip
+!mcp-server-v*.zip
 !.gitkeep
 
 # Documentation build
