@@ -1,0 +1,59 @@
+# DXT Ignore File
+# Exclude unnecessary files from the package
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Windows-specific libraries not needed
+**/pythonwin/
+**/pywin32*/
+**/win32/
+**/win32com/
+**/win32comext/
+**/isapi/
+**/adodbapi/
+**.chm
+
+# Test files
+tests/
+*test*.py
+pytest.ini
+
+# Development files
+*.bat
+*.sh
+build-dxt.*
+requirements-dev.txt
+
+# Archives and backups
+.archive/
+*.zip
+*.rar
+*.bak
+*.backup
+
+# Git
+.git/
+.github/
+
+# Documentation not needed in package
+CONTRIBUTING.md
+DEVELOPER.md
+MIGRATION.md
+CHANGELOG_STORYTELLER.md
+FUN_FACTS.md
+ANNOUNCEMENTS.md
+ANTHROPIC_SUBMISSION.md
+README_*.md
+*_RELEASE*.md
+GITHUB_*.md
+
+# Config examples
+*.example
+*.env.example
+
+# Old manifests
+dxt-manifest.json

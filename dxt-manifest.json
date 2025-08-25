@@ -2,8 +2,8 @@
   "dxt_version": "0.1.0",
   "name": "wordpress-mcp",
   "display_name": "WordPress MCP",
-  "version": "1.1.1",
-  "description": "Control WordPress through Claude - manage content, edit templates, handle WooCommerce, all with natural language! The first WordPress integration with personality.",
+  "version": "1.2.0",
+  "description": "Control WordPress through Claude - manage content, edit templates, handle WooCommerce",
   "author": {
     "name": "Breuk & Claude",
     "email": "extrareality22@gmail.com",
@@ -19,10 +19,7 @@
     "cms",
     "content-management",
     "blog",
-    "ecommerce",
-    "automation",
-    "bulk-operations",
-    "template-editing"
+    "ecommerce"
   ],
   "requirements": {
     "claude_desktop": ">=0.1.0"
@@ -30,7 +27,7 @@
   "mcp": {
     "type": "python",
     "runtime": {
-      "python": ">=3.8"
+      "python": ">=3.9"
     },
     "entry_point": "mcp-server/server.py",
     "install": {
@@ -38,121 +35,29 @@
     }
   },
   "configuration": {
-    "required": [
+    "type": "environment",
+    "variables": [
       {
         "name": "WP_SITE_URL",
         "type": "string",
-        "description": "Your WordPress site URL (e.g., https://your-site.com)",
-        "placeholder": "https://your-wordpress-site.com"
+        "description": "Your WordPress site URL",
+        "required": true,
+        "placeholder": "https://your-site.com"
       },
       {
-        "name": "WP_USERNAME", 
+        "name": "WP_USERNAME",
         "type": "string",
-        "description": "WordPress username with admin privileges",
+        "description": "WordPress username",
+        "required": true,
         "placeholder": "admin"
       },
       {
         "name": "WP_APP_PASSWORD",
         "type": "password",
         "description": "WordPress Application Password",
+        "required": true,
         "placeholder": "xxxx xxxx xxxx xxxx xxxx xxxx"
       }
-    ],
-    "optional": [
-      {
-        "name": "MCP_DEBUG",
-        "type": "boolean",
-        "default": false,
-        "description": "Enable debug logging for troubleshooting"
-      },
-      {
-        "name": "RATE_LIMIT",
-        "type": "number",
-        "default": 60,
-        "description": "Maximum API requests per minute"
-      },
-      {
-        "name": "API_TIMEOUT",
-        "type": "number",
-        "default": 30,
-        "description": "API request timeout in seconds"
-      }
     ]
-  },
-  "capabilities": [
-    {
-      "name": "WordPress Management",
-      "description": "Create, update, delete posts and pages",
-      "tools": ["wp_get_posts", "wp_create_post", "wp_update_post", "wp_delete_post"]
-    },
-    {
-      "name": "Media Library",
-      "description": "Upload and manage media files",
-      "tools": ["wp_upload_media", "wp_get_media", "wp_delete_media"]
-    },
-    {
-      "name": "Template Editing",
-      "description": "Edit theme files with automatic backups",
-      "tools": ["wp_read_template", "wp_update_template", "wp_list_templates"]
-    },
-    {
-      "name": "WooCommerce",
-      "description": "Manage products, orders, and customers",
-      "tools": ["wc_get_products", "wc_update_product", "wc_get_orders", "wc_bulk_update"]
-    },
-    {
-      "name": "System Monitoring",
-      "description": "Check site health and system information",
-      "tools": ["wp_site_health", "wp_system_info", "wp_plugin_status"]
-    }
-  ],
-  "setup_instructions": {
-    "wordpress": [
-      "1. Install the WordPress plugin from wp-mcp-plugin folder",
-      "2. Activate 'WordPress MCP Integration' in WordPress admin",
-      "3. Go to Users → Your Profile → Application Passwords",
-      "4. Create a new Application Password named 'Claude MCP'",
-      "5. Copy the generated password (format: xxxx xxxx xxxx xxxx xxxx xxxx)"
-    ],
-    "configuration": [
-      "1. Enter your WordPress site URL (with https://)",
-      "2. Enter your WordPress admin username",
-      "3. Paste the Application Password from step 5 above",
-      "4. Test connection with: 'Show me my WordPress posts'"
-    ]
-  },
-  "troubleshooting": {
-    "connection_failed": "Verify your site URL includes https:// and has no trailing slash",
-    "authentication_error": "Regenerate Application Password and ensure correct username",
-    "tools_not_showing": "Restart Claude Desktop and start a new conversation",
-    "rate_limit": "Increase RATE_LIMIT in configuration or wait 60 seconds"
-  },
-  "examples": [
-    {
-      "prompt": "Create a blog post about AI and creativity",
-      "description": "Creates a new WordPress post with AI-generated content"
-    },
-    {
-      "prompt": "Update all product prices by 10%",
-      "description": "Bulk updates WooCommerce product prices"
-    },
-    {
-      "prompt": "Fix the typo in my header template",
-      "description": "Edits theme files with automatic backup"
-    },
-    {
-      "prompt": "Show me today's orders",
-      "description": "Retrieves and displays WooCommerce orders"
-    }
-  ],
-  "changelog": {
-    "1.1.1": "CI/CD pipeline, comprehensive tests, personality-packed documentation",
-    "1.0.1": "Added DXT support for one-click installation",
-    "1.0.0": "Initial release with full WordPress and WooCommerce support"
-  },
-  "support": {
-    "issues": "https://github.com/Breuk-AI/wordpress-mcp/issues",
-    "discussions": "https://github.com/Breuk-AI/wordpress-mcp/discussions",
-    "documentation": "https://github.com/Breuk-AI/wordpress-mcp#readme"
   }
 }

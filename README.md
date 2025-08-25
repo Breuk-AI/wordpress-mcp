@@ -91,6 +91,25 @@ cp .env.example .env
 - ✅ **HTTPS Enforcement** - Secure connections required
 - ✅ **File Extension Validation** - Only .php files editable
 
+## 🔐 Privacy Policy
+
+**WordPress MCP respects your privacy and data:**
+
+- **Local Operation Only** - All operations occur between Claude Desktop and your WordPress site
+- **No Data Collection** - We do not collect, store, or transmit any user data or conversation data
+- **No Third-Party Services** - No external services are used beyond your WordPress site
+- **Secure Credential Storage** - Application passwords are stored securely in your OS keychain
+- **Your Data Stays Yours** - All WordPress content remains on your server
+- **No Analytics or Tracking** - Zero telemetry or usage tracking
+- **Open Source Transparency** - All code is publicly auditable on GitHub
+
+The only data accessed is:
+- Your WordPress site content (posts, pages, products) - only when you request it
+- WordPress configuration needed for operations
+- Theme files when using template editing features
+
+All data transmission uses secure HTTPS connections directly to your WordPress site.
+
 ## 📋 Requirements
 
 ### WordPress
